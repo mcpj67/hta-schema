@@ -1,0 +1,787 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://hta-schema.org/v0.1/schema.json",
+  "title": "HTA Schema v0.1 - Decision Tree Models",
+  "description": "JSON Schema for Health Technology Assessment economic models - Decision Trees",
+  "type": "object",
+  "required": ["schema_version", "model_metadata", "model_structure", "parameters", "analysis_settings"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^0\\.1\\.[0-9]+$",
+      "description": "Schema version following semantic versioning"
+    },
+    "model_metadata": {
+      "$ref": "#/definitions/ModelMetadata"
+    },
+    "model_structure": {
+      "$ref": "#/definitions/ModelStructure"
+    },
+    "parameters": {
+      "$ref": "#/definitions/Parameters"
+    },
+    "analysis_settings": {
+      "$ref": "#/definitions/AnalysisSettings"
+    }
+  },
+  "definitions": {
+    "ModelMetadata": {
+      "type": "object",
+      "required": ["model_id", "model_name", "model_type", "created_date", "modified_date", "author", "description"],
+      "properties": {
+        "model_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique identifier for this model"
+        },
+        "model_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "Human-readable model name"
+        },
+        "model_type": {
+          "type": "string",
+          "enum": ["decision_tree", "markov", "tte", "microsim"],
+          "description": "Type of model structure"
+        },
+        "created_date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 datetime when model was created"
+        },
+        "modified_date": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 datetime of last modification"
+        },
+        "author": {
+          "$ref": "#/definitions/Author"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000,
+          "description": "Brief model description"
+        },
+        "version": {
+          "type": "string",
+          "description": "Model version (independent of schema version)"
+        },
+        "keywords": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Keywords for search and categorization"
+        },
+        "clinical_area": {
+          "type": "string",
+          "description": "Disease or intervention area"
+        },
+        "target_population": {
+          "type": "string",
+          "description": "Description of target patient population"
+        },
+        "comparators": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 2,
+          "description": "List of interventions being compared"
+        },
+        "setting": {
+          "type": "string",
+          "description": "Healthcare setting (e.g., 'UK NHS', 'US payer')"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$",
+          "description": "ISO 4217 currency code"
+        },
+        "currency_year": {
+          "type": "integer",
+          "minimum": 1900,
+          "maximum": 2100,
+          "description": "Year for cost data"
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Reference"
+          },
+          "description": "Academic citations"
+        },
+        "license": {
+          "type": "string",
+          "description": "Data license (e.g., 'CC-BY-4.0')"
+        },
+        "data_sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DataSource"
+          },
+          "description": "Links to input data sources"
+        }
+      }
+    },
+    "Author": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Author's full name"
+        },
+        "affiliation": {
+          "type": "string",
+          "description": "Institutional affiliation"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Contact email"
+        },
+        "orcid": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]$",
+          "description": "ORCID identifier"
+        }
+      }
+    },
+    "Reference": {
+      "type": "object",
+      "required": ["citation"],
+      "properties": {
+        "citation": {
+          "type": "string",
+          "description": "Full citation text"
+        },
+        "doi": {
+          "type": "string",
+          "description": "Digital Object Identifier"
+        },
+        "pmid": {
+          "type": "string",
+          "description": "PubMed ID"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to publication"
+        }
+      }
+    },
+    "DataSource": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of data source"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["trial", "registry", "cohort_study", "administrative_data", "expert_opinion", "published_literature"],
+          "description": "Type of data source"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the data source"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to access data"
+        }
+      }
+    },
+    "ModelStructure": {
+      "type": "object",
+      "required": ["root_node", "nodes"],
+      "properties": {
+        "root_node": {
+          "type": "string",
+          "description": "ID of the root decision node"
+        },
+        "nodes": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "$ref": "#/definitions/Node"
+            }
+          },
+          "minProperties": 1,
+          "description": "Map of node_id to node definition"
+        }
+      }
+    },
+    "Node": {
+      "type": "object",
+      "required": ["node_id", "node_type", "label"],
+      "properties": {
+        "node_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_-]+$",
+          "description": "Unique node identifier"
+        },
+        "node_type": {
+          "type": "string",
+          "enum": ["decision", "chance", "terminal"],
+          "description": "Type of node"
+        },
+        "label": {
+          "type": "string",
+          "description": "Display label for node"
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed node description"
+        }
+      },
+      "oneOf": [
+        {
+          "$ref": "#/definitions/DecisionNode"
+        },
+        {
+          "$ref": "#/definitions/ChanceNode"
+        },
+        {
+          "$ref": "#/definitions/TerminalNode"
+        }
+      ]
+    },
+    "DecisionNode": {
+      "type": "object",
+      "required": ["node_type", "branches"],
+      "properties": {
+        "node_type": {
+          "const": "decision"
+        },
+        "branches": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DecisionBranch"
+          },
+          "minItems": 2,
+          "description": "Decision branches (alternatives)"
+        }
+      }
+    },
+    "ChanceNode": {
+      "type": "object",
+      "required": ["node_type", "branches"],
+      "properties": {
+        "node_type": {
+          "const": "chance"
+        },
+        "branches": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ChanceBranch"
+          },
+          "minItems": 2,
+          "description": "Probabilistic branches"
+        }
+      }
+    },
+    "TerminalNode": {
+      "type": "object",
+      "required": ["node_type", "outcomes"],
+      "properties": {
+        "node_type": {
+          "const": "terminal"
+        },
+        "outcomes": {
+          "$ref": "#/definitions/Outcomes"
+        }
+      }
+    },
+    "DecisionBranch": {
+      "type": "object",
+      "required": ["branch_id", "label", "target_node"],
+      "properties": {
+        "branch_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_-]+$",
+          "description": "Unique branch identifier"
+        },
+        "label": {
+          "type": "string",
+          "description": "Branch display label"
+        },
+        "target_node": {
+          "type": "string",
+          "description": "ID of target node"
+        },
+        "initial_cost": {
+          "$ref": "#/definitions/ParameterReference",
+          "description": "Optional immediate cost for choosing this branch"
+        }
+      }
+    },
+    "ChanceBranch": {
+      "type": "object",
+      "required": ["branch_id", "label", "probability", "target_node"],
+      "properties": {
+        "branch_id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_-]+$",
+          "description": "Unique branch identifier"
+        },
+        "label": {
+          "type": "string",
+          "description": "Branch display label"
+        },
+        "probability": {
+          "$ref": "#/definitions/ParameterReference",
+          "description": "Branch probability parameter"
+        },
+        "target_node": {
+          "type": "string",
+          "description": "ID of target node"
+        }
+      }
+    },
+    "Outcomes": {
+      "type": "object",
+      "required": ["costs", "utilities"],
+      "properties": {
+        "costs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CostItem"
+          },
+          "description": "Array of cost components"
+        },
+        "utilities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/UtilityItem"
+          },
+          "description": "Array of utility values over time"
+        },
+        "life_years": {
+          "$ref": "#/definitions/ParameterReference",
+          "description": "Expected life years in this outcome"
+        }
+      }
+    },
+    "CostItem": {
+      "type": "object",
+      "required": ["category", "value", "timing"],
+      "properties": {
+        "category": {
+          "type": "string",
+          "description": "Cost category (e.g., 'drug', 'hospital', 'follow_up')"
+        },
+        "value": {
+          "$ref": "#/definitions/ParameterReference",
+          "description": "Cost value parameter"
+        },
+        "timing": {
+          "type": "string",
+          "enum": ["immediate", "annual", "one_time_at"],
+          "description": "When cost is incurred"
+        },
+        "duration_years": {
+          "$ref": "#/definitions/ParameterReference",
+          "description": "Duration for recurring costs (required if timing='annual')"
+        },
+        "time_point": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Time point for one_time_at costs (in years)"
+        }
+      }
+    },
+    "UtilityItem": {
+      "type": "object",
+      "required": ["value", "timing"],
+      "properties": {
+        "value": {
+          "$ref": "#/definitions/ParameterReference",
+          "description": "Utility value parameter"
+        },
+        "timing": {
+          "type": "string",
+          "enum": ["immediate", "annual", "one_time_at"],
+          "description": "When utility is experienced"
+        },
+        "duration_years": {
+          "$ref": "#/definitions/ParameterReference",
+          "description": "Duration for recurring utility (required if timing='annual')"
+        },
+        "time_point": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Time point for one_time_at utility (in years)"
+        }
+      }
+    },
+    "ParameterReference": {
+      "type": "object",
+      "required": ["parameter_ref"],
+      "properties": {
+        "parameter_ref": {
+          "type": "string",
+          "description": "Reference to parameter ID"
+        }
+      }
+    },
+    "Parameters": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z0-9_-]+$": {
+          "$ref": "#/definitions/Parameter"
+        }
+      },
+      "minProperties": 1,
+      "description": "Map of parameter_id to parameter definition"
+    },
+    "Parameter": {
+      "type": "object",
+      "required": ["name", "type", "base_value"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Human-readable parameter name"
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed parameter description"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["probability", "cost", "utility", "rate", "relative_risk", "duration"],
+          "description": "Parameter type"
+        },
+        "base_value": {
+          "type": "number",
+          "description": "Base case value for deterministic analysis"
+        },
+        "distribution": {
+          "$ref": "#/definitions/Distribution",
+          "description": "Probability distribution for PSA"
+        },
+        "bounds": {
+          "type": "object",
+          "properties": {
+            "lower": {
+              "type": "number",
+              "description": "Lower bound for parameter value"
+            },
+            "upper": {
+              "type": "number",
+              "description": "Upper bound for parameter value"
+            }
+          },
+          "description": "Valid range for parameter"
+        },
+        "source": {
+          "type": "string",
+          "description": "Citation or data source for parameter"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Additional context or assumptions"
+        }
+      }
+    },
+    "Distribution": {
+      "type": "object",
+      "required": ["family", "parameters"],
+      "properties": {
+        "family": {
+          "type": "string",
+          "enum": ["beta", "gamma", "lognormal", "normal", "uniform"],
+          "description": "Distribution family"
+        },
+        "parameters": {
+          "type": "object",
+          "description": "Distribution-specific parameters"
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "family": {
+              "const": "beta"
+            },
+            "parameters": {
+              "type": "object",
+              "required": ["alpha", "beta"],
+              "properties": {
+                "alpha": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "beta": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                }
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "family": {
+              "const": "gamma"
+            },
+            "parameters": {
+              "type": "object",
+              "required": ["shape", "scale"],
+              "properties": {
+                "shape": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "scale": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                }
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "family": {
+              "const": "lognormal"
+            },
+            "parameters": {
+              "type": "object",
+              "required": ["mu", "sigma"],
+              "properties": {
+                "mu": {
+                  "type": "number"
+                },
+                "sigma": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                }
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "family": {
+              "const": "normal"
+            },
+            "parameters": {
+              "type": "object",
+              "required": ["mean", "sd"],
+              "properties": {
+                "mean": {
+                  "type": "number"
+                },
+                "sd": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                }
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "family": {
+              "const": "uniform"
+            },
+            "parameters": {
+              "type": "object",
+              "required": ["lower", "upper"],
+              "properties": {
+                "lower": {
+                  "type": "number"
+                },
+                "upper": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "AnalysisSettings": {
+      "type": "object",
+      "required": ["base_case"],
+      "properties": {
+        "base_case": {
+          "$ref": "#/definitions/BaseCaseSettings"
+        },
+        "sensitivity_analyses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SensitivityAnalysis"
+          },
+          "description": "Specifications for sensitivity analyses"
+        }
+      }
+    },
+    "BaseCaseSettings": {
+      "type": "object",
+      "required": ["time_horizon", "time_horizon_units", "discount_rate_costs", "discount_rate_outcomes"],
+      "properties": {
+        "time_horizon": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Duration of analysis"
+        },
+        "time_horizon_units": {
+          "type": "string",
+          "enum": ["years", "months", "days"],
+          "description": "Units for time horizon"
+        },
+        "cycle_length": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Cycle length (for Markov models)"
+        },
+        "cycle_length_units": {
+          "type": "string",
+          "enum": ["years", "months", "weeks", "days"],
+          "description": "Units for cycle length"
+        },
+        "discount_rate_costs": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Annual discount rate for costs (e.g., 0.035 = 3.5%)"
+        },
+        "discount_rate_outcomes": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Annual discount rate for health outcomes"
+        },
+        "half_cycle_correction": {
+          "type": "boolean",
+          "description": "Apply half-cycle correction (Markov models)"
+        },
+        "perspective": {
+          "type": "string",
+          "enum": ["healthcare_system", "societal", "payer", "patient"],
+          "description": "Economic perspective"
+        }
+      }
+    },
+    "SensitivityAnalysis": {
+      "type": "object",
+      "required": ["analysis_id", "name", "type"],
+      "properties": {
+        "analysis_id": {
+          "type": "string",
+          "description": "Unique identifier for this analysis"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable analysis name"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["one_way", "two_way", "threshold", "scenario", "probabilistic"],
+          "description": "Type of sensitivity analysis"
+        }
+      },
+      "oneOf": [
+        {
+          "$ref": "#/definitions/OneWaySensitivity"
+        },
+        {
+          "$ref": "#/definitions/ThresholdAnalysis"
+        },
+        {
+          "$ref": "#/definitions/ProbabilisticAnalysis"
+        }
+      ]
+    },
+    "OneWaySensitivity": {
+      "type": "object",
+      "required": ["type", "parameter", "values"],
+      "properties": {
+        "type": {
+          "const": "one_way"
+        },
+        "parameter": {
+          "type": "string",
+          "description": "Parameter ID to vary"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "description": "Values to test"
+        }
+      }
+    },
+    "ThresholdAnalysis": {
+      "type": "object",
+      "required": ["type", "parameter", "range"],
+      "properties": {
+        "type": {
+          "const": "threshold"
+        },
+        "parameter": {
+          "type": "string",
+          "description": "Parameter ID for threshold analysis"
+        },
+        "range": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "[min, max] range to search"
+        },
+        "step": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Step size for threshold search"
+        }
+      }
+    },
+    "ProbabilisticAnalysis": {
+      "type": "object",
+      "required": ["type", "iterations"],
+      "properties": {
+        "type": {
+          "const": "probabilistic"
+        },
+        "iterations": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 100000,
+          "description": "Number of PSA iterations"
+        },
+        "random_seed": {
+          "type": "integer",
+          "description": "Random seed for reproducibility"
+        },
+        "parameters": {
+          "oneOf": [
+            {
+              "const": "all_with_distributions",
+              "description": "Include all parameters with defined distributions"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Specific parameter IDs to include in PSA"
+            }
+          ]
+        }
+      }
+    }
+  }
+}
