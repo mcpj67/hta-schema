@@ -66,3 +66,29 @@ No migration needed - initial release
 ---
 
 For the complete specification, see [specification/HTA_Schema_Technical_Specification_v0.1.md](specification/HTA_Schema_Technical_Specification_v0.1.md)
+
+# Changelog
+
+## [0.1.1] - 2024-12-15
+
+### Added
+- Expression language support for complex formulas in terminal nodes
+- `ValueReference` now supports both `parameter_ref` and `expression`
+- Comprehensive expression language specification document
+- Support for arithmetic, conditional logic, statistical functions, and discounting
+- 25+ built-in functions including discount_stream, gamma_mean, beta_mean, etc.
+
+### Changed
+- Enhanced `ValueReference` definition to support expressions alongside parameter references
+- Added new parameter types: `count` and `ratio`
+
+### Backward Compatibility
+- All v0.1.0 models remain fully valid in v0.1.1
+- No breaking changes
+
+## [0.1.0] - 2024-12-12
+
+### Added
+- Initial release with decision tree support
+- Basic schema structure for HTA models
+- Simple parameter references

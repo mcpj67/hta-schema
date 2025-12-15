@@ -140,3 +140,21 @@ Developed to address the lack of standardization in health technology assessment
 ---
 
 **Note:** This repository contains only the specification. For tools, viewers, and implementations, see [hta-schema-tools](https://github.com/[username]/hta-schema-tools).
+
+## Latest Version: v0.1.1
+
+**New in v0.1.1:** Expression language support for complex formulas!
+
+HTA Schema now supports sophisticated calculations in terminal nodes, including:
+- Discounted lifetime costs and QALYs
+- Conditional logic (if-then-else)
+- Statistical distribution functions
+- Custom discount functions
+
+See [Expression Language Specification](specification/EXPRESSION_LANGUAGE_v0.1.1.md) for details.
+
+### Version Compatibility
+- **v0.1.1** (Current): Adds expression support, backward compatible with v0.1.0
+- **v0.1.0**: Initial release with parameter references only
+
+Choose v0.1.1 for new models. Existing v0.1.0 models work with v0.1.1 tools.
